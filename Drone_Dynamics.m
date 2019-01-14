@@ -1,7 +1,7 @@
 close all
 
-timestep = 0.2; % timestep of 1s
-time = 30;
+timestep = 0.01; % timestep of 0.01s
+time = 100; % Simulation time
 time = timestep:timestep:time;
 sim_itr = 1:1:size(time,2);
 
@@ -41,6 +41,10 @@ d = 1.1E-6; % drag factor
 
 g = 9.81; % acceleration due to gravity
 
+max_roll = 0.0175; % limit roll to 2^o
+max_pitch = 0.0175; % limit pitch to 2^o
+
+%% Initialise Variables
 % Initial throttle, roll, pitch, and yaw commands
 U1 = 0; % Throttle - For m=0.4734, U1 must be greater than 4.64 to overcome gravity
 U2 = 0; % Roll
@@ -56,20 +60,12 @@ psi_des = 0;
 psi_des_arr = sim_itr*0;
 z_des = 1;
 z_des_arr = sim_itr*0;
+x_des = 0;
+x_des_arr = sim_itr*0;
+y_des = 0;
+y_des_arr = sim_itr*0;
 
 % PID Constants
-% kp_phi = 1.2; % 0.6
-% ki_phi = 0.8; % 0.318
-% kd_phi = 1.8; % 0.785
-% I_e_phi = 0;
-% D_phi = 0;
-% 
-% kp_theta = 1.2; % 0.6
-% ki_theta = 0.8; % 0.318
-% kd_theta = 1.8; % 0.785
-% I_e_theta = 0;
-% D_theta = 0;
-
 kp_phi = 2.5; % 
 ki_phi = 1; % 
 kd_phi = 3; % 
@@ -88,6 +84,18 @@ kd_psi = 2; % 1.04
 I_e_psi = 0;
 D_psi = 0;
 
+kp_x = 0.001; % 
+ki_x = 0.005; % 
+kd_x = 0.1; % 
+I_e_x = 0;
+D_x = 0;
+
+kp_y = 0.001; % 
+ki_y = 0.005; % 
+kd_y = 0.1; % 
+I_e_y = 0;
+D_y = 0;
+
 kp_z = 0.8; % 0.6
 ki_z = 0.319; % 0.319
 kd_z = 2.3; % 0.784
@@ -103,6 +111,8 @@ Omega = 0;
 
 sim_itr(:,1:2) = []; % remove first element of iteration
 e_phi_arr = sim_itr*0;
+e_x_arr = sim_itr*0;
+e_y_arr = sim_itr*0;
 U2_arr = sim_itr*0;
 
 z(1:3) = [1,1,1];
@@ -121,49 +131,117 @@ theta_des_arr(1, 1:2) = [theta_des, theta_des];
 psi_des_arr(1, 1:2) = [psi_des, psi_des];
 z_des_arr(1, 1:2) = [z_des, z_des];
 
+%% Simulation
 for i = sim_itr
     %% Desired movement plan
-    if time(i) < 15 
+%     if time(i) < 15 
+%         z_des = 1;
+%         phi_des = 0;
+%         theta_des = 0;
+%         psi_des = 0;
+%     elseif time(i) < 20
+%         z_des = 5;
+%         phi_des = 0;
+%         theta_des = 0;
+%         psi_des = pi/4;
+%     elseif time(i) < 30
+%         z_des = 3;
+%         phi_des = 0;
+%         theta_des = 0;
+%         psi_des = pi/4;
+%     elseif time(i) < 50
+%         z_des = 5;
+%         phi_des = 0;
+%         theta_des = pi/18;
+%         psi_des = pi/4;
+%     elseif time(i) < 65
+%         z_des = 5;
+%         phi_des = 0;
+%         theta_des = -pi/18;
+%         psi_des = pi/4;
+%     elseif time(i) < 80
+%         z_des = 5;
+%         phi_des = 0;
+%         theta_des = 0;
+%         psi_des = pi/4;
+%     else 
+%         z_des = 3;
+%         phi_des = 0;
+%         theta_des = 0;
+%         psi_des = pi/4;
+%     end
+
+    if time(i) < 10
+        x_des = 0;
+        y_des = 0;
         z_des = 1;
-        phi_des = 0;
-        theta_des = 0;
-        psi_des = 0;
+        psi_des = 0.3;
     elseif time(i) < 20
-        z_des = 5;
-        phi_des = 0;
-        theta_des = 0;
-        psi_des = pi/4;
-    elseif time(i) < 30
-        z_des = 3;
-        phi_des = 0;
-        theta_des = 0;
-        psi_des = pi/4;
+        x_des = 1;
+        y_des = 0;
+        z_des = 1;
+        psi_des = pi/2;
     elseif time(i) < 50
-        z_des = 5;
-        phi_des = 0;
-        theta_des = pi/18;
-        psi_des = pi/4;
-    elseif time(i) < 65
-        z_des = 5;
-        phi_des = 0;
-        theta_des = -pi/18;
-        psi_des = pi/4;
-    elseif time(i) < 80
-        z_des = 5;
-        phi_des = 0;
-        theta_des = 0;
-        psi_des = pi/4;
-    else 
-        z_des = 3;
-        phi_des = 0;
-        theta_des = 0;
+        x_des = 1;
+        y_des = 1;
+        z_des = 1;
+        psi_des = 0;
+    else
+        x_des = 1;
+        y_des = 1;
+        z_des = 1;
         psi_des = pi/4;
     end
     
+    %% Outer X Controller
+    e_x = x_des - x(i-1);
+    I_e_x = I_e_x + e_x*timestep;
+    D_x = (x(i-1) - x(i-2))/timestep;
+    theta_des_hat = (e_x*(kp_x + ki_x*I_e_x) - kd_x*D_x);
+    e_x_arr(i) = e_x;
+    
+    %% Outer Y Controller
+    e_y = y_des - y(i-1);
+    I_e_y = I_e_y + e_y*timestep;
+    D_y = (y(i-1) - y(i-2))/timestep;
+    phi_des_hat = -(e_y*(kp_y + ki_y*I_e_y) - kd_y*D_y); % cos(psi(i-1))*
+    e_y_arr(i) = e_y;
+    
+    if time(i) > 10
+        i;
+    end
+    if time(i) >= 50
+        i;
+    end
+    
+    if (phi_des_hat > max_roll)
+        phi_des_hat = max_roll;
+    elseif (phi_des_hat < -max_roll)
+        phi_des_hat = -max_roll;
+    end
+    if (theta_des_hat > max_pitch)
+        theta_des_hat = max_pitch;
+    elseif (theta_des_hat < -max_pitch)
+        theta_des_hat = -max_pitch;
+    end
+    
+    theta_des = cos(psi(i-1))*theta_des_hat - sin(psi(i-1))*phi_des_hat;
+    phi_des = sin(psi(i-1))*theta_des_hat + cos(psi(i-1))*phi_des_hat;
+
+%     s = real(sign( phi_des*sin(psi(i-1)) + theta_des*cos(psi(i-1)) ));
+% 
+%     phi_des = real(asin( sqrt(1/(1 + phi_des^2 + theta_des^2)) * ...
+%                     (theta_des*sin(psi(i-1)) - phi_des*cos(psi(i-1))) ));
+%                 
+%     theta_des = real(s * acos( 1/(cos(phi_des)*sqrt(1 + phi_des^2 + theta_des^2)) ));
+    
+    %% Update reference arrays
     phi_des_arr(i) = phi_des;
     theta_des_arr(i) = theta_des;
     psi_des_arr(i) = psi_des;
     z_des_arr(i) = z_des;
+    x_des_arr(i) = x_des;
+    y_des_arr(i) = y_des;
 
     %% Roll Controller
     e_phi = phi_des - phi(i-1);
@@ -297,9 +375,9 @@ end
 
 %% Plot accelerations against time
 % X
-% plot_acc_vel_pos(x_double_dot,x_dot,x,"x","m",time);
+plot_acc_vel_pos(x_double_dot, x_dot, x, x_des_arr, "x", "m", time);
 % Y
-% plot_acc_vel_pos(y_double_dot,y_dot,y,"y","m",time);
+plot_acc_vel_pos(y_double_dot, y_dot, y, y_des_arr, "y", "m", time);
 % Z
 plot_acc_vel_pos(z_double_dot, z_dot, z, z_des_arr, "z", "m", time);
 
@@ -312,6 +390,8 @@ plot_acc_vel_pos(psi_double_dot ,psi_dot, psi, psi_des_arr, "yaw", "rad", time);
 
 figure
 q = quiver3(x,y,z,x_dot/10,y_dot/10,z_dot/10);
+hold on;
+plot3(x_des_arr, y_des_arr, z_des_arr);
 q.AutoScaleFactor = 0.3;
 xlabel("X /m");
 ylabel("Y /m");
