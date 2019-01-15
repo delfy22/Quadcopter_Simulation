@@ -1,6 +1,6 @@
 close all
 
-timestep = 0.4; % timestep of 0.01s
+timestep = 0.1; % timestep of 0.01s
 time = 100; % Simulation time
 time = timestep:timestep:time;
 sim_itr = 1:1:size(time,2);
@@ -66,39 +66,39 @@ y_des = 0;
 y_des_arr = sim_itr*0;
 
 % PID Constants
-kp_phi = 4; % 
-ki_phi = 0; % 
-kd_phi = 2; % 
+kp_phi = 4.5;
+ki_phi = 0;
+kd_phi = 2; 
 I_e_phi = 0;
 D_phi = 0;
 
-kp_theta = 4; % 0.6
-ki_theta = 0; % 0.318
-kd_theta = 2.2; % 0.785
+kp_theta = 4.5;
+ki_theta = 0;
+kd_theta = 2;
 I_e_theta = 0;
 D_theta = 0;
 
-kp_psi = 1.8; % 0.6
-ki_psi = 0; % 0.24
-kd_psi = 3; % 1.04
+kp_psi = 1.8;
+ki_psi = 0;
+kd_psi = 3;
 I_e_psi = 0;
 D_psi = 0;
 
-kp_x = 0.05; % 
-ki_x = 0; % 
-kd_x = 0.18; % 
+kp_x = 0.05;
+ki_x = 0;
+kd_x = 0.14; 
 I_e_x = 0;
 D_x = 0;
 
-kp_y = 0.05; % 
-ki_y = 0; % 
-kd_y = 0.14; % 
+kp_y = 0.05; 
+ki_y = 0;
+kd_y = 0.14; 
 I_e_y = 0;
 D_y = 0;
 
-kp_z = 1.8; % 0.6
-ki_z = 0; % 0.319
-kd_z = 2; % 0.784
+kp_z = 1.8; 
+ki_z = 0;
+kd_z = 2; 
 I_e_z = 0;
 D_z = 0;
 
@@ -167,9 +167,9 @@ for i = sim_itr
         z_des = 4;
         psi_des = pi/4;
     else
-        x_des = 10;
-        y_des = 5;
-        z_des = 4;
+        x_des = 0;
+        y_des = 4;
+        z_des = 5;
         psi_des = pi/4;
     end
     
@@ -363,9 +363,9 @@ figure
 q = quiver3(x,y,z,x_dot,y_dot,0.5*z_dot);
 hold on;
 plot3(x_des_arr, y_des_arr, z_des_arr);
-q.AutoScale = 'off';
-q.AutoScaleFactor = 1;
-q.MaxHeadSize = 0.5;
+% q.AutoScale = 'off';
+% q.AutoScaleFactor = 1;
+% q.MaxHeadSize = 0.5;
 xlabel("X /m");
 ylabel("Y /m");
 zlabel("Z /m");
