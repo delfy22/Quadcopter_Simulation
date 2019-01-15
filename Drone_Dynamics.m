@@ -1,6 +1,6 @@
 close all
 
-timestep = 0.01; % timestep of 0.01s
+timestep = 0.4; % timestep of 0.01s
 time = 100; % Simulation time
 time = timestep:timestep:time;
 sim_itr = 1:1:size(time,2);
@@ -41,8 +41,8 @@ d = 1.1E-6; % drag factor
 
 g = 9.81; % acceleration due to gravity
 
-max_roll = 0.0175; % limit roll to 2^o
-max_pitch = 0.0175; % limit pitch to 2^o
+max_roll = 0.1745; % limit roll to 10^o
+max_pitch = 0.1745; % limit pitch to 10^o
 
 %% Initialise Variables
 % Initial throttle, roll, pitch, and yaw commands
@@ -58,7 +58,7 @@ theta_des = 0;
 theta_des_arr = sim_itr*0;
 psi_des = 0;
 psi_des_arr = sim_itr*0;
-z_des = 1;
+z_des = 0;
 z_des_arr = sim_itr*0;
 x_des = 0;
 x_des_arr = sim_itr*0;
@@ -66,39 +66,39 @@ y_des = 0;
 y_des_arr = sim_itr*0;
 
 % PID Constants
-kp_phi = 2.5; % 
-ki_phi = 1; % 
-kd_phi = 3; % 
+kp_phi = 4; % 
+ki_phi = 0; % 
+kd_phi = 2; % 
 I_e_phi = 0;
 D_phi = 0;
 
-kp_theta = 2.5; % 0.6
-ki_theta = 1; % 0.318
-kd_theta = 3; % 0.785
+kp_theta = 4; % 0.6
+ki_theta = 0; % 0.318
+kd_theta = 2.2; % 0.785
 I_e_theta = 0;
 D_theta = 0;
 
-kp_psi = 1.2; % 0.6
-ki_psi = 0.65; % 0.24
-kd_psi = 2; % 1.04
+kp_psi = 1.8; % 0.6
+ki_psi = 0; % 0.24
+kd_psi = 3; % 1.04
 I_e_psi = 0;
 D_psi = 0;
 
-kp_x = 0.001; % 
-ki_x = 0.005; % 
-kd_x = 0.1; % 
+kp_x = 0.05; % 
+ki_x = 0; % 
+kd_x = 0.18; % 
 I_e_x = 0;
 D_x = 0;
 
-kp_y = 0.001; % 
-ki_y = 0.005; % 
-kd_y = 0.1; % 
+kp_y = 0.05; % 
+ki_y = 0; % 
+kd_y = 0.14; % 
 I_e_y = 0;
 D_y = 0;
 
-kp_z = 0.8; % 0.6
-ki_z = 0.319; % 0.319
-kd_z = 2.3; % 0.784
+kp_z = 1.8; % 0.6
+ki_z = 0; % 0.319
+kd_z = 2; % 0.784
 I_e_z = 0;
 D_z = 0;
 
@@ -115,7 +115,7 @@ e_x_arr = sim_itr*0;
 e_y_arr = sim_itr*0;
 U2_arr = sim_itr*0;
 
-z(1:3) = [1,1,1];
+z(1:3) = [0,0,0];
 
 for (i=2:3)
     while (psi(i-1) >= 2*pi)
@@ -134,62 +134,42 @@ z_des_arr(1, 1:2) = [z_des, z_des];
 %% Simulation
 for i = sim_itr
     %% Desired movement plan
-%     if time(i) < 15 
+%     if time(i) < 10 
 %         z_des = 1;
 %         phi_des = 0;
 %         theta_des = 0;
 %         psi_des = 0;
 %     elseif time(i) < 20
 %         z_des = 5;
-%         phi_des = 0;
-%         theta_des = 0;
-%         psi_des = pi/4;
-%     elseif time(i) < 30
-%         z_des = 3;
-%         phi_des = 0;
-%         theta_des = 0;
-%         psi_des = pi/4;
-%     elseif time(i) < 50
-%         z_des = 5;
-%         phi_des = 0;
-%         theta_des = pi/18;
-%         psi_des = pi/4;
-%     elseif time(i) < 65
-%         z_des = 5;
-%         phi_des = 0;
-%         theta_des = -pi/18;
-%         psi_des = pi/4;
-%     elseif time(i) < 80
-%         z_des = 5;
-%         phi_des = 0;
-%         theta_des = 0;
+%         phi_des = 3;
+%         theta_des = 5;
 %         psi_des = pi/4;
 %     else 
-%         z_des = 3;
-%         phi_des = 0;
-%         theta_des = 0;
+%         z_des = 5;
+%         phi_des = 3;
+%         theta_des = 5;
 %         psi_des = pi/4;
 %     end
 
     if time(i) < 10
         x_des = 0;
         y_des = 0;
-        z_des = 1;
-        psi_des = 0.3;
+        z_des = 4;
+        psi_des = pi/2;
     elseif time(i) < 20
-        x_des = 1;
+        x_des = 10;
         y_des = 0;
-        z_des = 1;
+        z_des = 4;
         psi_des = pi/2;
     elseif time(i) < 50
-        x_des = 1;
-        y_des = 1;
-        z_des = 1;
-        psi_des = 0;
+        x_des = 10;
+        y_des = 5;
+        z_des = 4;
+        psi_des = pi/4;
     else
-        x_des = 1;
-        y_des = 1;
-        z_des = 1;
+        x_des = 10;
+        y_des = 5;
+        z_des = 4;
         psi_des = pi/4;
     end
     
@@ -197,14 +177,14 @@ for i = sim_itr
     e_x = x_des - x(i-1);
     I_e_x = I_e_x + e_x*timestep;
     D_x = (x(i-1) - x(i-2))/timestep;
-    theta_des_hat = (e_x*(kp_x + ki_x*I_e_x) - kd_x*D_x);
+    theta_des_hat = e_x*kp_x + ki_x*I_e_x - kd_x*D_x;
     e_x_arr(i) = e_x;
     
     %% Outer Y Controller
     e_y = y_des - y(i-1);
     I_e_y = I_e_y + e_y*timestep;
     D_y = (y(i-1) - y(i-2))/timestep;
-    phi_des_hat = -(e_y*(kp_y + ki_y*I_e_y) - kd_y*D_y); % cos(psi(i-1))*
+    phi_des_hat = -(e_y*kp_y + ki_y*I_e_y - kd_y*D_y); 
     e_y_arr(i) = e_y;
     
     if time(i) > 10
@@ -227,13 +207,6 @@ for i = sim_itr
     
     theta_des = cos(psi(i-1))*theta_des_hat - sin(psi(i-1))*phi_des_hat;
     phi_des = sin(psi(i-1))*theta_des_hat + cos(psi(i-1))*phi_des_hat;
-
-%     s = real(sign( phi_des*sin(psi(i-1)) + theta_des*cos(psi(i-1)) ));
-% 
-%     phi_des = real(asin( sqrt(1/(1 + phi_des^2 + theta_des^2)) * ...
-%                     (theta_des*sin(psi(i-1)) - phi_des*cos(psi(i-1))) ));
-%                 
-%     theta_des = real(s * acos( 1/(cos(phi_des)*sqrt(1 + phi_des^2 + theta_des^2)) ));
     
     %% Update reference arrays
     phi_des_arr(i) = phi_des;
@@ -247,7 +220,7 @@ for i = sim_itr
     e_phi = phi_des - phi(i-1);
     I_e_phi = I_e_phi + e_phi*timestep;
     D_phi = (phi(i-1) - phi(i-2))/timestep;
-    U2 = Ix*(e_phi*(kp_phi + ki_phi*I_e_phi) - kd_phi*D_phi);
+    U2 = Ix*(e_phi*kp_phi + ki_phi*I_e_phi - kd_phi*D_phi);
     e_phi_arr(i) = e_phi;
     U2_arr(i) = U2;
     
@@ -255,7 +228,7 @@ for i = sim_itr
     e_theta = theta_des - theta(i-1);
     I_e_theta = I_e_theta + e_theta*timestep;
     D_theta = (theta(i-1) - theta(i-2))/timestep;
-    U3 = Ix*(e_theta*(kp_theta + ki_theta*I_e_theta) - kd_theta*D_theta);
+    U3 = Ix*(e_theta*kp_theta + ki_theta*I_e_theta - kd_theta*D_theta);
 
     %% Yaw Controller
     % Wraparound psi(i-1)
@@ -285,6 +258,7 @@ for i = sim_itr
     end
     
     I_e_psi = I_e_psi + e_psi*timestep;
+    
     % Compute potential differentials
     D_psi_1 = (psi(i-1) - psi(i-2))/timestep;
     D_psi_2 = (psi(i-1) - psi(i-2) + 2*pi)/timestep;
@@ -303,13 +277,13 @@ for i = sim_itr
         D_psi = D_psi_1;
     end
     
-    U4 = Ix*(e_psi*(kp_psi + ki_psi*I_e_psi) - kd_psi*D_psi);
+    U4 = Ix*(e_psi*kp_psi + ki_psi*I_e_psi - kd_psi*D_psi);
     
     %% Z Controller
     e_z = z_des - z(i-1);
     I_e_z = I_e_z + e_z*timestep;
     D_z = (z(i-1) - z(i-2))/timestep;
-    U1 = (m/(cos(theta(i-1))*cos(phi(i-1))))*(g + e_z*(kp_z + ki_z*I_e_z) - kd_z*D_z);
+    U1 = (m/(cos(theta(i-1))*cos(phi(i-1))))*(g + e_z*kp_z + ki_z*I_e_z - kd_z*D_z);
     
     %% Calculate propellor speeds
     if (U1 == 0)
@@ -332,10 +306,7 @@ for i = sim_itr
                         Jr*theta_dot(i-1)*Omega/Ix + U2/Ix;
     theta_double_dot(i) = phi_dot(i-1)*psi_dot(i-1)*(Iz - Ix)/Iy - ...
                         Jr*phi_dot(i-1)*Omega/Iy + U3/Iy;
-    psi_double_dot(i) = theta_dot(i-1)*phi_dot(i-1)*(Ix - Iy)/Iz+ U4/Iz;                
-%     phi_double_dot(i) = U2/Ix;
-%     theta_double_dot(i) = U3/Iy;
-%     psi_double_dot(i) = U4/Iz;
+    psi_double_dot(i) = theta_dot(i-1)*phi_dot(i-1)*(Ix - Iy)/Iz+ U4/Iz;  
     
     % integrate for angular velocities    
     phi_dot(i) = phi_dot(i-1) + phi_double_dot(i)*timestep;
@@ -389,10 +360,47 @@ plot_acc_vel_pos(theta_double_dot, theta_dot, theta, theta_des_arr, "pitch", "ra
 plot_acc_vel_pos(psi_double_dot ,psi_dot, psi, psi_des_arr, "yaw", "rad", time);
 
 figure
-q = quiver3(x,y,z,x_dot/10,y_dot/10,z_dot/10);
+q = quiver3(x,y,z,x_dot,y_dot,0.5*z_dot);
 hold on;
 plot3(x_des_arr, y_des_arr, z_des_arr);
-q.AutoScaleFactor = 0.3;
+q.AutoScale = 'off';
+q.AutoScaleFactor = 1;
+q.MaxHeadSize = 0.5;
 xlabel("X /m");
 ylabel("Y /m");
 zlabel("Z /m");
+
+%% Shows larger arrows for direction of travel
+% Credit to https://uk.mathworks.com/matlabcentral/fileexchange/29307-plot-with-direction-3d
+
+% rMag = 1;
+% % Length of vector
+% lenTime = length(x);
+% % Indices of tails of arrows
+% vSelect0 = 1:(lenTime-1);
+% % Indices of tails of arrows
+% vSelect1 = vSelect0 + 1;
+% % X coordinates of tails of arrows
+% vXQ0 = x(1, vSelect0);
+% % Y coordinates of tails of arrows
+% vYQ0 = y(1, vSelect0);
+% % X coordinates of tails of arrows
+% vZQ0 = z(1, vSelect0);
+% % X coordinates of heads of arrows
+% vXQ1 = x(1, vSelect1);
+% % Y coordinates of heads of arrows
+% vYQ1 = y(1, vSelect1);
+% % Z coordinates of heads of arrows
+% vZQ1 = z(1, vSelect1);
+% % vector difference between heads & tails
+% vPx = (vXQ1 - vXQ0) * rMag;
+% vPy = (vYQ1 - vYQ0) * rMag;
+% vPz = (vZQ1 - vZQ0) * rMag;
+% % make plot 
+% h1 = plot3 (x, y, z, '.-'); 
+% hold on;
+% % add arrows 
+% h2 = quiver3 (vXQ0, vYQ0, vZQ0, vPx, vPy, vPz, 0, 'r'); grid on; 
+% plot3(x_des_arr, y_des_arr, z_des_arr, 'bl');
+% hold off
+% % axis equal
