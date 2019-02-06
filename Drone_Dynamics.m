@@ -1,5 +1,6 @@
 close all
 
+%% Initialise Variables
 timestep = 0.1; % timestep of 0.01s
 time = 100; % Simulation time
 time = timestep:timestep:time;
@@ -44,7 +45,6 @@ g = 9.81; % acceleration due to gravity
 max_roll = 0.1745; % limit roll to 10^o
 max_pitch = 0.1745; % limit pitch to 10^o
 
-%% Initialise Variables
 % Initial throttle, roll, pitch, and yaw commands
 U1 = 0; % Throttle - For m=0.4734, U1 must be greater than 4.64 to overcome gravity
 U2 = 0; % Roll
@@ -65,7 +65,40 @@ x_des_arr = sim_itr*0;
 y_des = 0;
 y_des_arr = sim_itr*0;
 
-% PID Constants
+
+
+sim_itr(:,1:2) = []; % remove first element of iteration
+e_phi_arr = sim_itr*0;
+e_x_arr = sim_itr*0;
+e_y_arr = sim_itr*0;
+U2_arr = sim_itr*0;
+
+z(1:3) = [0,0,0];
+
+% Individual and total propellor speeds
+Omega1 = 0;
+Omega2 = 0;
+Omega3 = 0;
+Omega4 = 0;
+Omega = 0;
+
+% Wrap psi into the correct range
+for (i=2:3)
+    while (psi(i-1) >= 2*pi)
+        psi(i-1) = psi(i-1) - 2*pi;
+    end
+    while (psi(i-1) < 0)
+        psi(i-1) = psi(i-1) + 2*pi;
+    end
+end
+
+% Set initial conditions
+phi_des_arr(1, 1:2) = [phi_des, phi_des];
+theta_des_arr(1, 1:2) = [theta_des, theta_des];
+psi_des_arr(1, 1:2) = [psi_des, psi_des];
+z_des_arr(1, 1:2) = [z_des, z_des];
+
+%% PID Constants
 kp_phi = 4.5;
 ki_phi = 0;
 kd_phi = 2; 
@@ -102,55 +135,10 @@ kd_z = 2;
 I_e_z = 0;
 D_z = 0;
 
-% Individual and total propellor speeds
-Omega1 = 0;
-Omega2 = 0;
-Omega3 = 0;
-Omega4 = 0;
-Omega = 0;
-
-sim_itr(:,1:2) = []; % remove first element of iteration
-e_phi_arr = sim_itr*0;
-e_x_arr = sim_itr*0;
-e_y_arr = sim_itr*0;
-U2_arr = sim_itr*0;
-
-z(1:3) = [0,0,0];
-
-for (i=2:3)
-    while (psi(i-1) >= 2*pi)
-        psi(i-1) = psi(i-1) - 2*pi;
-    end
-    while (psi(i-1) < 0)
-        psi(i-1) = psi(i-1) + 2*pi;
-    end
-end
-
-phi_des_arr(1, 1:2) = [phi_des, phi_des];
-theta_des_arr(1, 1:2) = [theta_des, theta_des];
-psi_des_arr(1, 1:2) = [psi_des, psi_des];
-z_des_arr(1, 1:2) = [z_des, z_des];
 
 %% Simulation
 for i = sim_itr
     %% Desired movement plan
-%     if time(i) < 10 
-%         z_des = 1;
-%         phi_des = 0;
-%         theta_des = 0;
-%         psi_des = 0;
-%     elseif time(i) < 20
-%         z_des = 5;
-%         phi_des = 3;
-%         theta_des = 5;
-%         psi_des = pi/4;
-%     else 
-%         z_des = 5;
-%         phi_des = 3;
-%         theta_des = 5;
-%         psi_des = pi/4;
-%     end
-
     if time(i) < 10
         x_des = 0;
         y_des = 0;
@@ -174,25 +162,31 @@ for i = sim_itr
     end
     
     %% Outer X Controller
+    % Compute Error
     e_x = x_des - x(i-1);
+    % Compute Integral
     I_e_x = I_e_x + e_x*timestep;
+    % Compute Derivative
     D_x = (x(i-1) - x(i-2))/timestep;
+    % Compute PID Output and place into array
     theta_des_hat = e_x*kp_x + ki_x*I_e_x - kd_x*D_x;
     e_x_arr(i) = e_x;
     
     %% Outer Y Controller
+    % Compute Error
     e_y = y_des - y(i-1);
+    % Compute Integral
     I_e_y = I_e_y + e_y*timestep;
+    % Compute Derivative
     D_y = (y(i-1) - y(i-2))/timestep;
+    % Compute PID Output and place into array
     phi_des_hat = -(e_y*kp_y + ki_y*I_e_y - kd_y*D_y); 
     e_y_arr(i) = e_y;
     
-    if time(i) > 10
-        i;
-    end
-    if time(i) >= 50
-        i;
-    end
+    %% Calculate roll and pitch angles from desired direction of travel
+    % Limit roll and pitch angles, limiting the drone's speed and ensures 
+    % that it is never so tiltedthat the vertical thrust is insufficient to 
+    % keep the drone at thedesired height
     
     if (phi_des_hat > max_roll)
         phi_des_hat = max_roll;
@@ -205,6 +199,8 @@ for i = sim_itr
         theta_des_hat = -max_pitch;
     end
     
+    % Calculate actual pitch and roll depending on drone's current
+    % orientation
     theta_des = cos(psi(i-1))*theta_des_hat - sin(psi(i-1))*phi_des_hat;
     phi_des = sin(psi(i-1))*theta_des_hat + cos(psi(i-1))*phi_des_hat;
     
@@ -216,21 +212,29 @@ for i = sim_itr
     x_des_arr(i) = x_des;
     y_des_arr(i) = y_des;
 
-    %% Roll Controller
+    %% Inner Roll Controller
+    % Compute Error
     e_phi = phi_des - phi(i-1);
+    % Compute Integral
     I_e_phi = I_e_phi + e_phi*timestep;
+    % Compute Derivative
     D_phi = (phi(i-1) - phi(i-2))/timestep;
+    % Compute PID Output and place into array
     U2 = Ix*(e_phi*kp_phi + ki_phi*I_e_phi - kd_phi*D_phi);
     e_phi_arr(i) = e_phi;
     U2_arr(i) = U2;
     
-    %% Pitch Controller
+    %% Inner Pitch Controller
+    % Compute Error
     e_theta = theta_des - theta(i-1);
+    % Compute Integral
     I_e_theta = I_e_theta + e_theta*timestep;
+    % Compute Derivative
     D_theta = (theta(i-1) - theta(i-2))/timestep;
+    % Compute PID Output and place into array
     U3 = Ix*(e_theta*kp_theta + ki_theta*I_e_theta - kd_theta*D_theta);
 
-    %% Yaw Controller
+    %% Inner Yaw Controller
     % Wraparound psi(i-1)
     while (psi(i-1) >= 2*pi)
         psi(i-1) = psi(i-1) - 2*pi;
@@ -257,6 +261,7 @@ for i = sim_itr
         e_psi = e_psi - 2*pi;
     end
     
+    % Compute Integral
     I_e_psi = I_e_psi + e_psi*timestep;
     
     % Compute potential differentials
@@ -277,15 +282,22 @@ for i = sim_itr
         D_psi = D_psi_1;
     end
     
+    % Compute PID Output
     U4 = Ix*(e_psi*kp_psi + ki_psi*I_e_psi - kd_psi*D_psi);
     
-    %% Z Controller
+    %% Inner Z Controller
+    % Compute Error
     e_z = z_des - z(i-1);
+    % Compute Integral
     I_e_z = I_e_z + e_z*timestep;
+    % Compute Derivative
     D_z = (z(i-1) - z(i-2))/timestep;
+    % Compute PID Output
     U1 = (m/(cos(theta(i-1))*cos(phi(i-1))))*(g + e_z*kp_z + ki_z*I_e_z - kd_z*D_z);
     
     %% Calculate propellor speeds
+    % U1 is thrust control so if 0, all propellor speeds must be 0
+    % regardless of other controls
     if (U1 == 0)
         Omega1 = 0;
         Omega2 = 0;
@@ -298,6 +310,7 @@ for i = sim_itr
         Omega4 = real(sqrt(U1/(4*b) + U2/(2*b*l) + U4/(4*d)));
     end
     
+    % Average propellor speed
     Omega = - Omega1 + Omega2 - Omega3 + Omega4;
     
     %% Angular components
@@ -320,8 +333,10 @@ for i = sim_itr
         
     %% Linear components
     % calculate linear accelerations based on commands
-    x_double_dot(i) = U1*(cos(psi(i))*sin(theta(i))*cos(phi(i)) + sin(psi(i))*sin(phi(i)))/m;
-    y_double_dot(i) = U1*(sin(psi(i))*sin(theta(i))*cos(phi(i)) - cos(psi(i))*sin(phi(i)))/m;
+    x_double_dot(i) = U1*(cos(psi(i))*sin(theta(i))*cos(phi(i)) + ...
+                      sin(psi(i))*sin(phi(i)))/m;
+    y_double_dot(i) = U1*(sin(psi(i))*sin(theta(i))*cos(phi(i)) - ...
+                      cos(psi(i))*sin(phi(i)))/m;
     z_double_dot(i) = U1*cos(theta(i))*cos(phi(i))/m - g;
 
     % integrate for linear velocities 
