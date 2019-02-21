@@ -255,9 +255,9 @@ for i = sim_itr
     % Wraparound error so that the smallest magnitude error is used, this
     % is the direction in which the least movement is required to reach
     % target
-    if ((e_psi+2*pi)^2 < e_psi^2)
+    if ((e_psi+2*pi)^2 < e_psi^2) % Simplify to "e_psi<-pi"
         e_psi = e_psi + 2*pi;
-    elseif ((e_psi-2*pi)^2 < e_psi^2)
+    elseif ((e_psi-2*pi)^2 < e_psi^2) % Simplify "to e_psi>pi"
         e_psi = e_psi - 2*pi;
     end
     
@@ -270,13 +270,13 @@ for i = sim_itr
     D_psi_3 = (psi(i-1) - psi(i-2) - 2*pi)/timestep;
     
     % Pick the smallest magnitude differential
-    if (D_psi_2^2 < D_psi_1^2)
+    if (D_psi_2^2 < D_psi_1^2) % Simplify to "psi(i-1) - psi(i-2)<-pi"
         if (D_psi_3^2 < D_psi_2^2)
             D_psi = D_psi_3;
         else
             D_psi = D_psi_2;
         end
-    elseif (D_psi_3^2 < D_psi_1^2)
+    elseif (D_psi_3^2 < D_psi_1^2) % Simplify to "psi(i-1) - psi(i-2)>pi"
         D_psi = D_psi_3;
     else
         D_psi = D_psi_1;
