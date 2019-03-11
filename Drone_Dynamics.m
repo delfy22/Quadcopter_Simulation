@@ -169,7 +169,7 @@ for i = sim_itr
     % Compute Derivative
     D_x = (x(i-1) - x(i-2))/timestep;
     % Compute PID Output and place into array
-    theta_des_hat = e_x*kp_x + ki_x*I_e_x - kd_x*D_x;
+    x_output = e_x*kp_x + ki_x*I_e_x - kd_x*D_x;
     e_x_arr(i) = e_x;
     
     %% Outer Y Controller
@@ -180,7 +180,7 @@ for i = sim_itr
     % Compute Derivative
     D_y = (y(i-1) - y(i-2))/timestep;
     % Compute PID Output and place into array
-    phi_des_hat = -(e_y*kp_y + ki_y*I_e_y - kd_y*D_y); 
+    y_output = -(e_y*kp_y + ki_y*I_e_y - kd_y*D_y); 
     e_y_arr(i) = e_y;
     
     %% Calculate roll and pitch angles from desired direction of travel
@@ -188,21 +188,21 @@ for i = sim_itr
     % that it is never so tiltedthat the vertical thrust is insufficient to 
     % keep the drone at thedesired height
     
-    if (phi_des_hat > max_roll)
-        phi_des_hat = max_roll;
-    elseif (phi_des_hat < -max_roll)
-        phi_des_hat = -max_roll;
+    if (y_output > max_roll)
+        y_output = max_roll;
+    elseif (y_output < -max_roll)
+        y_output = -max_roll;
     end
-    if (theta_des_hat > max_pitch)
-        theta_des_hat = max_pitch;
-    elseif (theta_des_hat < -max_pitch)
-        theta_des_hat = -max_pitch;
+    if (x_output > max_pitch)
+        x_output = max_pitch;
+    elseif (x_output < -max_pitch)
+        x_output = -max_pitch;
     end
     
     % Calculate actual pitch and roll depending on drone's current
     % orientation
-    theta_des = cos(psi(i-1))*theta_des_hat - sin(psi(i-1))*phi_des_hat;
-    phi_des = sin(psi(i-1))*theta_des_hat + cos(psi(i-1))*phi_des_hat;
+    theta_des = cos(psi(i-1))*x_output - sin(psi(i-1))*y_output;
+    phi_des = sin(psi(i-1))*x_output + cos(psi(i-1))*y_output;
     
     %% Update reference arrays
     phi_des_arr(i) = phi_des;
